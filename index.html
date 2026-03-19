@@ -400,6 +400,38 @@ body::after {
 .apikey-link { font-size: 11px; color: var(--gold-dim); text-decoration: none; flex-shrink: 0; white-space: nowrap; }
 .apikey-link:hover { color: var(--gold); }
 @media (max-width: 680px) { .apikey-bar { padding: 8px 14px; } }
+
+.apikey-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 28px;
+  background: rgba(237,228,204,0.7);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.apikey-bar.saved { background: rgba(90,110,82,0.08); }
+.apikey-label { font-size: 14px; flex-shrink: 0; }
+#api-key-input {
+  flex: 1; padding: 6px 12px;
+  background: rgba(255,252,244,0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'EB Garamond', serif; font-size: 13px;
+  color: var(--ink); outline: none;
+  transition: border-color 0.2s;
+}
+#api-key-input:focus { border-color: var(--gold); }
+.apikey-save {
+  padding: 6px 16px; border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--ink2), #3a2a10);
+  border: 1px solid rgba(200,146,42,0.3);
+  color: var(--gold2); font-family: 'EB Garamond', serif;
+  font-size: 13px; cursor: pointer; flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.apikey-save:hover { opacity: 0.85; }
+.apikey-link { font-size: 11px; color: var(--gold-dim); text-decoration: none; flex-shrink: 0; white-space: nowrap; }
+.apikey-link:hover { color: var(--gold); }
+@media (max-width: 680px) { .apikey-bar { padding: 8px 14px; } }
 </style>
 </head>
 <body>
@@ -594,19 +626,30 @@ async function sendMessage() {
   document.getElementById('send-btn').disabled = true;
   showTyping();
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: buildSystem(),
-        messages: msgs
-      })
-    });
+    const GEMINI_KEY = window.__GEMINI_KEY__ || sessionStorage.getItem('gkey');
+    if (!GEMINI_KEY) throw new Error('Please paste your Gemini API key above and click Save.');
+
+    // Build Gemini contents array
+    const contents = msgs.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
+    }));
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: buildSystem() }] },
+          contents,
+          generationConfig: { maxOutputTokens: 1000, temperature: 0.9 }
+        })
+      }
+    );
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'API error');
-    const reply = data.content?.[0]?.text || 'The oracle is silent.';
+    if (!res.ok) throw new Error(data.error?.message || 'Gemini API error');
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'The oracle is silent.';
     msgs.push({ role: 'assistant', content: reply });
     removeTyping(); appendMsg('bot', reply);
   } catch (e) {
@@ -619,6 +662,28 @@ async function sendMessage() {
   ta.focus();
 }
 
+
+window.__GEMINI_KEY__ = sessionStorage.getItem('gkey') || '';
+
+function saveKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (k) {
+    sessionStorage.setItem('gkey', k);
+    window.__GEMINI_KEY__ = k;
+    document.getElementById('apikey-bar').classList.add('saved');
+    document.getElementById('api-key-input').value = '✓ Gemini key saved!';
+    document.getElementById('api-key-input').disabled = true;
+  }
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const k = sessionStorage.getItem('gkey');
+  if (k) {
+    window.__GEMINI_KEY__ = k;
+    document.getElementById('api-key-input').value = '✓ Gemini key saved!';
+    document.getElementById('api-key-input').disabled = true;
+    document.getElementById('apikey-bar').classList.add('saved');
+  }
+});
 </script>
 </body>
 </html>
