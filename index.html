@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Socrates — The Philosopher's Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --parchment:    #f5efe0;
+  --parchment2:   #ede4cc;
+  --parchment3:   #e2d5b5;
+  --ink:          #1c1409;
+  --ink2:         #2e2210;
+  --ink3:         #4a3820;
+  --gold:         #c8922a;
+  --gold2:        #e8b84b;
+  --gold-dim:     #8c6218;
+  --rust:         #8b3a1a;
+  --sage:         #5a6e52;
+  --border:       rgba(100,75,30,0.18);
+  --border2:      rgba(100,75,30,0.08);
+  --shadow:       rgba(28,20,9,0.12);
+  --radius:       4px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: 'EB Garamond', Georgia, serif;
+  overflow: hidden;
+}
+
+/* ── Parchment texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.6;
+}
+
+/* ── Decorative corner marks ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(200,146,42,0.07) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 100%, rgba(139,58,26,0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 0%, rgba(200,146,42,0.04) 0%, transparent 35%),
+    radial-gradient(ellipse at 0% 100%, rgba(90,110,82,0.04) 0%, transparent 35%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Layout ── */
+.shell {
+  position: relative; z-index: 1;
+  display: flex; height: 100vh;
+  max-width: 1100px; margin: 0 auto;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  background: rgba(237,228,204,0.6);
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+  animation: fadeLeft 0.6s ease;
+}
+@keyframes fadeLeft { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+
+.sidebar-head {
+  padding: 28px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--gold-dim);
+}
+.sidebar-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700;
+  color: var(--ink); line-height: 1.2;
+  margin-top: 6px;
+}
+.sidebar-sub {
+  font-size: 12px; color: var(--ink3);
+  font-style: italic; margin-top: 4px;
+  line-height: 1.5;
+}
+
+.sidebar-section {
+  padding: 16px 20px 8px;
+  font-family: 'Playfair Display', serif;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--gold-dim);
+}
+
+.branch {
+  margin: 2px 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.18s;
+  border: 1px solid transparent;
+}
+.branch:hover { background: rgba(200,146,42,0.1); border-color: rgba(200,146,42,0.2); }
+.branch.active { background: rgba(200,146,42,0.14); border-color: rgba(200,146,42,0.3); }
+.branch-icon { font-size: 13px; margin-right: 7px; }
+.branch-name { font-size: 13px; color: var(--ink2); font-weight: 500; }
+.branch.active .branch-name { color: var(--gold); font-weight: 600; }
+
+.sidebar-quote {
+  margin-top: auto;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 12px; font-style: italic;
+  color: var(--ink3); line-height: 1.65;
+}
+.sidebar-quote cite {
+  display: block; margin-top: 6px;
+  font-style: normal; font-size: 11px;
+  color: var(--gold-dim); letter-spacing: 0.05em;
+}
+
+/* ── Main chat panel ── */
+.main {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+/* ── Top bar ── */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(245,239,224,0.85);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+.topbar-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--ink2), var(--ink3));
+  border: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(200,146,42,0.25);
+  animation: avatarPulse 4s ease-in-out infinite;
+}
+@keyframes avatarPulse { 0%,100%{ box-shadow: 0 2px 12px rgba(200,146,42,0.25); } 50%{ box-shadow: 0 2px 20px rgba(200,146,42,0.45); } }
+.topbar-info { flex: 1; }
+.topbar-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; font-weight: 700; color: var(--ink);
+}
+.topbar-status {
+  font-size: 11px; color: var(--ink3); font-style: italic;
+  margin-top: 1px;
+}
+.sdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 6px var(--sage); animation: blink 2.5s ease-in-out infinite; margin-right: 5px; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.topic-badge {
+  padding: 4px 12px; border-radius: 12px;
+  background: rgba(200,146,42,0.1);
+  border: 1px solid rgba(200,146,42,0.25);
+  font-size: 11px; color: var(--gold);
+  letter-spacing: 0.05em;
+  font-family: 'Playfair Display', serif;
+}
+
+/* ── Messages ── */
+.messages {
+  flex: 1; overflow-y: auto; padding: 32px 28px;
+  display: flex; flex-direction: column; gap: 24px;
+  scrollbar-width: thin; scrollbar-color: rgba(100,75,30,0.2) transparent;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-thumb { background: rgba(100,75,30,0.2); border-radius: 2px; }
+
+/* ── Welcome ── */
+.welcome {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 60%;
+  gap: 16px; text-align: center;
+  animation: riseIn 0.9s ease;
+}
+@keyframes riseIn { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+.welcome-seal {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--ink2), #3a2a10);
+  border: 3px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+  box-shadow: 0 4px 28px rgba(200,146,42,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  animation: sealSpin 0.8s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes sealSpin { from { transform:scale(0.5) rotate(-20deg); opacity:0; } to { transform:scale(1) rotate(0); opacity:1; } }
+.welcome h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; font-weight: 900;
+  color: var(--ink); line-height: 1.2;
+}
+.welcome p {
+  font-size: 15px; color: var(--ink3); font-style: italic;
+  max-width: 420px; line-height: 1.8;
+}
+.welcome-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.starters { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 480px; }
+.starter {
+  padding: 11px 18px; text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(237,228,204,0.5);
+  cursor: pointer; transition: all 0.2s;
+  font-family: 'EB Garamond', serif; font-size: 14px;
+  color: var(--ink2); font-style: italic;
+  line-height: 1.5;
+}
+.starter:hover {
+  background: rgba(200,146,42,0.08);
+  border-color: rgba(200,146,42,0.3);
+  color: var(--gold);
+  transform: translateX(4px);
+}
+.starter::before { content: '" '; color: var(--gold); font-size: 18px; line-height: 0; vertical-align: -3px; }
+
+/* ── Message rows ── */
+.msg { display: flex; gap: 14px; align-items: flex-start; animation: msgIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+.msg.user { flex-direction: row-reverse; }
+@keyframes msgIn { from { opacity:0; transform:translateY(10px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+.av {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0; margin-top: 2px;
+}
+.av-bot {
+  background: linear-gradient(135deg, var(--ink2), #3a2a10);
+  border: 2px solid var(--gold);
+  box-shadow: 0 2px 10px rgba(200,146,42,0.2);
+}
+.av-user {
+  background: var(--parchment2);
+  border: 1px solid var(--border);
+}
+
+.mcol { display: flex; flex-direction: column; gap: 5px; max-width: min(72%, 560px); }
+.msg.user .mcol { align-items: flex-end; }
+
+.bubble {
+  padding: 14px 20px;
+  border-radius: var(--radius);
+  font-size: 15px; line-height: 1.82;
+  position: relative;
+}
+.bubble-bot {
+  background: rgba(237,228,204,0.7);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--gold);
+  color: var(--ink);
+  box-shadow: 0 2px 16px var(--shadow);
+}
+.bubble-bot::before {
+  content: '\201C';
+  position: absolute; top: -4px; left: 14px;
+  font-family: 'Playfair Display', serif;
+  font-size: 32px; color: var(--gold); line-height: 1; opacity: 0.4;
+}
+.bubble-user {
+  background: linear-gradient(135deg, var(--ink2), #3a2a10);
+  border: 1px solid rgba(200,146,42,0.25);
+  color: var(--parchment2);
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.bubble-error { border-color: var(--rust) !important; color: var(--rust) !important; background: rgba(139,58,26,0.05) !important; }
+
+.bubble strong { color: var(--gold); font-weight: 700; }
+.bubble em { color: var(--rust); }
+.bubble code { font-family: 'EB Garamond', serif; background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 2px; font-size: 14px; color: var(--sage); }
+.bubble ul { padding-left: 20px; margin-top: 8px; }
+.bubble li { margin-bottom: 6px; }
+.bubble li::marker { color: var(--gold); }
+.bubble-user strong { color: var(--gold2); }
+.bubble-user em { color: rgba(245,239,224,0.75); }
+
+.msg-meta { display: flex; align-items: center; gap: 8px; }
+.ts { font-size: 10px; color: var(--ink3); opacity: 0.6; letter-spacing: 0.04em; }
+
+/* Typing */
+.typing { display: flex; gap: 6px; padding: 6px 2px; align-items: center; }
+.typing span { font-size: 11px; color: var(--ink3); font-style: italic; margin-right: 4px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); opacity: 0.5; animation: bnc 1.2s infinite; }
+.dot:nth-child(3) { animation-delay: 0.2s; }
+.dot:nth-child(4) { animation-delay: 0.4s; }
+@keyframes bnc { 0%,60%,100%{transform:translateY(0);opacity:0.5;} 30%{transform:translateY(-6px);opacity:1;} }
+
+/* ── Input area ── */
+.input-area {
+  padding: 16px 28px 22px;
+  border-top: 1px solid var(--border);
+  background: rgba(245,239,224,0.9);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+.input-row {
+  display: flex; gap: 12px; align-items: flex-end;
+  background: rgba(255,252,244,0.8);
+  border: 1px solid var(--border);
+  border-bottom: 2px solid var(--gold);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+.input-row:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 4px 20px rgba(200,146,42,0.15);
+}
+#user-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--ink); font-family: 'EB Garamond', serif;
+  font-size: 15px; resize: none;
+  min-height: 24px; max-height: 120px; line-height: 1.65;
+}
+#user-input::placeholder { color: rgba(74,56,32,0.45); font-style: italic; }
+
+.send-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid rgba(200,146,42,0.4);
+  background: linear-gradient(135deg, var(--ink2), #3a2a10);
+  color: var(--gold2); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s;
+  box-shadow: 0 2px 10px rgba(200,146,42,0.2);
+}
+.send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 18px rgba(200,146,42,0.35); }
+.send-btn:active { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.input-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 8px; padding: 0 4px;
+}
+.ifooter-left { font-size: 11px; color: var(--ink3); font-style: italic; opacity: 0.7; }
+.ifooter-right { font-size: 10px; color: var(--gold-dim); letter-spacing: 0.07em; text-transform: uppercase; }
+
+/* ── Mobile ── */
+@media (max-width: 680px) {
+  .sidebar { display: none; }
+  .topbar { padding: 12px 16px; }
+  .messages { padding: 20px 14px; }
+  .input-area { padding: 12px 14px 18px; }
+  .bubble { font-size: 14.5px; }
+  .mcol { max-width: 88%; }
+  .welcome h2 { font-size: 22px; }
+  .welcome-seal { width: 72px; height: 72px; font-size: 32px; }
+}
+
+.apikey-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 28px;
+  background: rgba(237,228,204,0.7);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.apikey-bar.saved { background: rgba(90,110,82,0.08); }
+.apikey-label { font-size: 14px; flex-shrink: 0; }
+#api-key-input {
+  flex: 1; padding: 6px 12px;
+  background: rgba(255,252,244,0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'EB Garamond', serif; font-size: 13px;
+  color: var(--ink); outline: none;
+  transition: border-color 0.2s;
+}
+#api-key-input:focus { border-color: var(--gold); }
+.apikey-save {
+  padding: 6px 16px; border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--ink2), #3a2a10);
+  border: 1px solid rgba(200,146,42,0.3);
+  color: var(--gold2); font-family: 'EB Garamond', serif;
+  font-size: 13px; cursor: pointer; flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.apikey-save:hover { opacity: 0.85; }
+.apikey-link { font-size: 11px; color: var(--gold-dim); text-decoration: none; flex-shrink: 0; white-space: nowrap; }
+.apikey-link:hover { color: var(--gold); }
+@media (max-width: 680px) { .apikey-bar { padding: 8px 14px; } }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">Philosophical Inquiry</div>
+      <div class="sidebar-title">Socrates</div>
+      <div class="sidebar-sub">Your companion in the examined life</div>
+    </div>
+
+    <div class="sidebar-section">Branches of Philosophy</div>
+
+    <div class="branch active" onclick="setBranch(this,'Ethics')" data-topic="Ethics">
+      <span class="branch-icon">⚖️</span><span class="branch-name">Ethics & Morality</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Metaphysics')" data-topic="Metaphysics">
+      <span class="branch-icon">🌌</span><span class="branch-name">Metaphysics</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Epistemology')" data-topic="Epistemology">
+      <span class="branch-icon">🔍</span><span class="branch-name">Epistemology</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Existentialism')" data-topic="Existentialism">
+      <span class="branch-icon">🌑</span><span class="branch-name">Existentialism</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Political Philosophy')" data-topic="Political Philosophy">
+      <span class="branch-icon">🏛️</span><span class="branch-name">Political Philosophy</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Philosophy of Mind')" data-topic="Philosophy of Mind">
+      <span class="branch-icon">🧠</span><span class="branch-name">Philosophy of Mind</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Aesthetics')" data-topic="Aesthetics">
+      <span class="branch-icon">🎭</span><span class="branch-name">Aesthetics & Beauty</span>
+    </div>
+    <div class="branch" onclick="setBranch(this,'Logic')" data-topic="Logic">
+      <span class="branch-icon">∴</span><span class="branch-name">Logic & Reasoning</span>
+    </div>
+
+    <div class="sidebar-quote">
+      "The unexamined life is not worth living."
+      <cite>— Socrates, Apology</cite>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-avatar">🦉</div>
+      <div class="topbar-info">
+        <div class="topbar-name">Socrates</div>
+        <div class="topbar-status"><span class="sdot"></span>Ready to inquire</div>
+      </div>
+      <div class="topic-badge" id="topic-badge">Ethics</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-seal">🦉</div>
+        <h2>The Examined Life Awaits</h2>
+        <div class="welcome-divider"></div>
+        <p>I am Socrates — or rather, an AI companion in the Socratic tradition. Let us question, reason, and seek truth together.</p>
+        <div class="starters">
+          <div class="starter" onclick="useStarter(this)">What is the nature of justice?</div>
+          <div class="starter" onclick="useStarter(this)">Can we ever truly know anything?</div>
+          <div class="starter" onclick="useStarter(this)">Does free will exist?</div>
+          <div class="starter" onclick="useStarter(this)">What makes a life worth living?</div>
+        </div>
+      </div>
+    </div>
+<div class="input-area">
+      <div class="input-row">
+        <textarea id="user-input" rows="1" placeholder="Pose your question or proposition…" maxlength="600"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">➤</button>
+      </div>
+      <div class="input-footer">
+        <span class="ifooter-left">Enter to send · Shift+Enter for new line</span>
+        <span class="ifooter-right">Powered by Claude · Anthropic</span>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ── Sidebar branch switching ────────────────────────────────────
+let currentTopic = 'Ethics';
+
+function setBranch(el, topic) {
+  document.querySelectorAll('.branch').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentTopic = topic;
+  document.getElementById('topic-badge').textContent = topic;
+  // Update sidebar quote per topic
+  const quotes = {
+    'Ethics':              ['"Virtue is knowledge." — Socrates', 'Apology'],
+    'Metaphysics':         ['"Wonder is the beginning of wisdom." — Aristotle', 'Metaphysics'],
+    'Epistemology':        ['"I know that I know nothing." — Socrates', 'Apology'],
+    'Existentialism':      ['"Existence precedes essence." — Sartre', 'Being and Nothingness'],
+    'Political Philosophy':['"Man is by nature a political animal." — Aristotle', 'Politics'],
+    'Philosophy of Mind':  ['"I think, therefore I am." — Descartes', 'Meditations'],
+    'Aesthetics':          ['"Beauty is the splendour of truth." — Plato', 'Phaedrus'],
+    'Logic':               ['"All men by nature desire to know." — Aristotle', 'Metaphysics'],
+  };
+  const q = quotes[topic] || quotes['Ethics'];
+  document.querySelector('.sidebar-quote').innerHTML = `"${q[0]}" <cite>— ${q[1]}</cite>`;
+}
+
+function useStarter(el) {
+  const text = el.textContent;
+  document.getElementById('user-input').value = text;
+  sendMessage();
+}
+
+// ── System prompt ────────────────────────────────────────────────
+function buildSystem() {
+  return `You are Socrates — a philosophical AI guide deeply versed in the Western and Eastern philosophical traditions. Your current focus is: **${currentTopic}**.
+
+Your method is Socratic: you ask probing questions, expose contradictions gently, and guide the interlocutor to deeper self-understanding. You do not lecture — you *dialogue*.
+
+Your persona:
+- Humble yet sharp. You claim ignorance while dismantling weak reasoning.
+- You cite thinkers naturally: Plato, Aristotle, Kant, Nietzsche, Hume, Descartes, Sartre, Wittgenstein, Confucius, Nagarjuna, and others as relevant.
+- You respond with intellectual warmth and a touch of Socratic irony.
+- You always end your response with **one probing question** that pushes the conversation deeper.
+- Responses are substantive but conversational — 150–280 words. Never academic jargon without explanation.
+- Use **bold** for key philosophical terms. Use *italics* for titles of works.
+
+Format: flowing prose paragraphs. No bullet points unless listing 3+ distinct concepts. No headers.`;
+}
+
+// ── Chat state ───────────────────────────────────────────────────
+let msgs = [];
+let busy = false;
+
+const ta = document.getElementById('user-input');
+ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; });
+ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+function now() { return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
+
+function md(t) {
+  return t
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/^[•\-] (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)+/g, m => '<ul>' + m + '</ul>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function appendMsg(role, content, err = false) {
+  const w = document.getElementById('welcome'); if (w) w.remove();
+  const c = document.getElementById('messages');
+  const wrap = document.createElement('div'); wrap.className = 'msg ' + role;
+  const av = document.createElement('div'); av.className = 'av av-' + role;
+  av.textContent = role === 'bot' ? '🦉' : '🧑';
+  const col = document.createElement('div'); col.className = 'mcol';
+  const bub = document.createElement('div');
+  bub.className = 'bubble bubble-' + role + (err ? ' bubble-error' : '');
+  bub.innerHTML = role === 'bot' && !err ? md(content) : content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const meta = document.createElement('div'); meta.className = 'msg-meta';
+  const ts = document.createElement('div'); ts.className = 'ts'; ts.textContent = now();
+  meta.appendChild(ts);
+  col.appendChild(bub); col.appendChild(meta);
+  wrap.appendChild(av); wrap.appendChild(col);
+  c.appendChild(wrap); c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const w = document.getElementById('welcome'); if (w) w.remove();
+  const c = document.getElementById('messages');
+  const wrap = document.createElement('div'); wrap.className = 'msg bot'; wrap.id = 'typi';
+  const av = document.createElement('div'); av.className = 'av av-bot'; av.textContent = '🦉';
+  const bub = document.createElement('div'); bub.className = 'bubble bubble-bot';
+  bub.innerHTML = '<div class="typing"><span>Contemplating</span><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  wrap.appendChild(av); wrap.appendChild(bub);
+  c.appendChild(wrap); c.scrollTop = c.scrollHeight;
+}
+function removeTyping() { const t = document.getElementById('typi'); if (t) t.remove(); }
+
+async function sendMessage() {
+  if (busy) return;
+  const text = ta.value.trim(); if (!text) return;
+  ta.value = ''; ta.style.height = 'auto';
+  appendMsg('user', text);
+  msgs.push({ role: 'user', content: text });
+  busy = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: buildSystem(),
+        messages: msgs
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API error');
+    const reply = data.content?.[0]?.text || 'The oracle is silent.';
+    msgs.push({ role: 'assistant', content: reply });
+    removeTyping(); appendMsg('bot', reply);
+  } catch (e) {
+    removeTyping();
+    appendMsg('bot', '⚠️ ' + (e.message || 'The connection to the agora has been lost.'), true);
+    msgs.pop();
+  }
+  busy = false;
+  document.getElementById('send-btn').disabled = false;
+  ta.focus();
+}
+
+</script>
+</body>
+</html>
