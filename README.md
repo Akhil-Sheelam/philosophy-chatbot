@@ -28,18 +28,19 @@ Philosophy is one of the richest topics for a conversational AI — it's open-en
 - **Secure API** — Anthropic API key stored as a Vercel environment variable, never exposed in frontend code
 
 ---
-
+ 
 ## 🛠️ Tech Stack
-
+ 
 | Layer | Technology |
 |---|---|
 | Frontend | Vanilla HTML, CSS, JavaScript |
 | Fonts | Playfair Display, EB Garamond (Google Fonts) |
-| AI Model | Claude Sonnet (Anthropic API) |
+| AI Model | Llama 3.3 70B (via Groq API) |
 | Backend | Vercel Serverless Function (`/api/chat.js`) |
 | Deployment | Vercel |
-
+ 
 ---
+
 
 ## 📁 Project Structure
 
@@ -66,10 +67,10 @@ npm install -g vercel
 ```
 
 **3. Add your API key**
-
+ 
 Create a `.env.local` file:
 ```
-ANTHROPIC_API_KEY=sk-ant-your-key-here
+GROQ_API_KEY=gsk_your-key-here
 ```
 
 **4. Run locally**
@@ -80,15 +81,15 @@ vercel dev
 Open [http://localhost:3000](http://localhost:3000)
 
 ---
-
+ 
 ## 🔐 Environment Variables
-
+ 
 | Variable | Description |
 |---|---|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key from [console.anthropic.com](https://console.anthropic.com/keys) |
-
+| `GROQ_API_KEY` | Your Groq API key from [console.groq.com](https://console.groq.com) |
+ 
 Set this in Vercel dashboard → Project Settings → Environment Variables.
-
+ 
 ---
 
 ## 💡 How I Built This
