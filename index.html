@@ -568,24 +568,19 @@ async function sendMessage() {
   document.getElementById('send-btn').disabled = true;
   showTyping();
   try {
-    // Build Gemini contents array
-    const contents = msgs.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
-
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: buildSystem() }] },
-        contents,
-        generationConfig: { maxOutputTokens: 1000, temperature: 0.9 }
+        messages: [
+          { role: 'system', content: buildSystem() },
+          ...msgs
+        ]
       })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'Gemini API error');
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'The oracle is silent.';
+    if (!res.ok) throw new Error(data.error?.message || 'Groq API error');
+    const reply = data.choices?.[0]?.message?.content || 'The oracle is silent.';
     msgs.push({ role: 'assistant', content: reply });
     removeTyping(); appendMsg('bot', reply);
   } catch (e) {
